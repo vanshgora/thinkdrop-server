@@ -206,7 +206,7 @@
             font-size: 1.1rem;
         }
 
-        .form-group input {
+        .form-group input, .form-group select {
             width: 100%;
             padding: 15px 20px;
             border: none;
@@ -217,10 +217,32 @@
             outline: none;
         }
 
-        .form-group input:focus {
+        .form-group input:focus, .form-group select:focus {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
             background: #fff;
+        }
+
+        .form-group select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 20px center;
+            background-size: 16px;
+            padding-right: 50px;
+        }
+
+        .form-group select:hover {
+            background: #fff;
+        }
+
+        .time-info {
+            font-size: 0.9rem;
+            color: #e0e0e0;
+            margin-top: 5px;
+            text-align: center;
+            opacity: 0.8;
         }
 
         .subscribe-btn {
@@ -338,7 +360,6 @@
             animation: slideIn 0.5s ease-out;
         }
 
-
         @keyframes slideIn {
             from {
                 opacity: 0;
@@ -413,7 +434,7 @@
             <h1>Daily Skill Challenges</h1>
             <p class="subtitle">Expand Your Mind, One Challenge at a Time</p>
             <p class="description">
-                Wake up to a new challenge every morning at 7:30 AM. And get an mail with random topics, creative tasks,
+                Wake up to a new challenge everyday at your selected timing. And get an mail with random topics, creative tasks,
                 and brain-bending
                 problems designed to build your multidimensional skillset and push your boundaries.
             </p>
@@ -427,11 +448,29 @@
                     <label for="email">Join the Challenge</label>
                     <input type="email" id="email" name="email" placeholder="Enter your email address" required>
                 </div>
+                <div class="form-group">
+                    <label for="time">Preferred Challenge Time</label>
+                    <select id="time" name="time" required>
+                        <option value="">Select your preferred time</option>
+                        <option value="06:00">6:00 AM - Early Bird</option>
+                        <option value="07:00">7:00 AM - Morning Boost</option>
+                        <option value="07:30" selected>7:30 AM - Default</option>
+                        <option value="08:00">8:00 AM - Commute Ready</option>
+                        <option value="09:00">9:00 AM - Work Start</option>
+                        <option value="12:00">12:00 PM - Lunch Break</option>
+                        <option value="17:00">5:00 PM - After Work</option>
+                        <option value="18:00">6:00 PM - Evening Wind-down</option>
+                        <option value="19:00">7:00 PM - Dinner Time</option>
+                        <option value="20:00">8:00 PM - Night Owl</option>
+                        <option value="21:00">9:00 PM - Before Bed</option>
+                    </select>
+                    <div class="time-info">You can change this anytime in your preferences</div>
+                </div>
                 <button type="submit" class="subscribe-btn">
                     Subscribe To Daily Challenge
                 </button>
                 <div class="success-message" id="successMessage">
-                    🎉 Welcome aboard! Your first challenge arrives tomorrow at 7:30 AM.
+                    🎉 Welcome aboard! Your first challenge arrives tomorrow at <span id="selectedTime">7:30 AM</span>.
                 </div>
                 <div class="error-message" id="errorMessage">
                     ❌ Oops! Something went wrong. Please try again.
@@ -453,7 +492,7 @@
                 <div class="feature-card">
                     <span class="feature-icon">⚡</span>
                     <h3>Daily Challenges</h3>
-                    <p>Bite-sized tasks delivered every morning at 7:30 AM, designed to fit into your routine while
+                    <p>Bite-sized tasks delivered every day, designed to fit into your routine while
                         pushing your comfort zone.</p>
                 </div>
                 <div class="feature-card">
@@ -473,43 +512,80 @@
     </footer>
 
     <script>
+        
+        function formatTimeForDisplay(time24) {
+            const [hours, minutes] = time24.split(':');
+            const hour = parseInt(hours);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const hour12 = hour % 12 || 12;
+            return `${hour12}:${minutes} ${ampm}`;
+        }
+
+    
+        document.getElementById('time').addEventListener('change', function() {
+            const selectedTime = this.value;
+            if (selectedTime) {
+                const formattedTime = formatTimeForDisplay(selectedTime);
+                document.getElementById('selectedTime').textContent = formattedTime;
+            }
+        });
+
         document.getElementById('subscribeForm').addEventListener('submit', async function (e) {
             e.preventDefault();
 
             const email = document.getElementById('email').value;
-            if (email && email.includes('@') && email.includes('.')) {
-                try {
-                    const response = await fetch('/addnewmail', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ email: email })
-                    });
+            const time = document.getElementById('time').value;
+            
+            if (!email || !email.includes('@') || !email.includes('.')) {
+                alert('Please enter a valid email address');
+                return;
+            }
 
-                    if (response.ok && response.status === 201) {
-                        const successMessage = document.getElementById('successMessage');
-                        successMessage.style.display = 'block';
-                        document.getElementById('email').value = '';
+            if (!time) {
+                alert('Please select your preferred challenge time');
+                return;
+            }
 
-                        setTimeout(() => {
-                            successMessage.style.display = 'none';
-                        }, 5000);
-                    } else {
-                        throw ('Error while submitting form');
-                    }
-                } catch (error) {
-                    console.log("Error while submiting form", error);
-                    const errorMessage = document.getElementById('errorMessage');
-                    errorMessage.style.display = 'block';
+            try {
+                const response = await fetch('/addnewmail', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        email: email,
+                        preferredTime: time
+                    })
+                });
+
+                if (response.ok && response.status === 201) {
+                    const resjson = await response.json();
+                    console.log(resjson);
+                    const successMessage = document.getElementById('successMessage');
+                    const selectedTimeDisplay = formatTimeForDisplay(time);
+                    document.getElementById('selectedTime').textContent = selectedTimeDisplay;
+                    successMessage.style.display = 'block';
+                  
                     document.getElementById('email').value = '';
+                    document.getElementById('time').value = '07:30';
 
                     setTimeout(() => {
-                        errorMessage.style.display = 'none';
+                        successMessage.style.display = 'none';
                     }, 5000);
+                } else {
+                    throw new Error('Error while submitting form');
                 }
-            } else {
-                alert('Please enter a valid email address');
+            } catch (error) {
+                console.log("Error while submitting form", error);
+                const errorMessage = document.getElementById('errorMessage');
+                errorMessage.style.display = 'block';
+                
+                document.getElementById('email').value = '';
+                document.getElementById('time').value = '07:30';
+
+                setTimeout(() => {
+                    errorMessage.style.display = 'none';
+                }, 5000);
             }
         });
 
@@ -547,13 +623,15 @@
             });
         });
 
-        const emailInput = document.getElementById('email');
-        emailInput.addEventListener('focus', function () {
-            this.parentElement.style.transform = 'scale(1.02)';
-        });
+        const inputs = document.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function () {
+                this.parentElement.style.transform = 'scale(1.02)';
+            });
 
-        emailInput.addEventListener('blur', function () {
-            this.parentElement.style.transform = 'scale(1)';
+            input.addEventListener('blur', function () {
+                this.parentElement.style.transform = 'scale(1)';
+            });
         });
     </script>
 </body>

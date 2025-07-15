@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3000;
 
 const server = http.createServer((req, res) => {
 
-    res.setHeader('Access-Control-Allow-Origin', '*'); 
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -22,7 +22,7 @@ const server = http.createServer((req, res) => {
         req.on('data', chunk => body += chunk);
         req.on('end', () => {
             const bodyData = JSON.parse(body);
-            if(url === '/addnewmail') {
+            if (url === '/addnewmail') {
                 addNewMail(bodyData, res);
             }
         });
