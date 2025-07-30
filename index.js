@@ -1,48 +1,79 @@
-const http = require('node:http');
-const path = require('node:path');
-const fs = require('node:fs');
 const dotenv = require('dotenv');
+const express = require('express');
+const cors = require('cors');
 const connectToDB = require('./dbconfig');
-const { addNewMail } = require('./controllers/controllers');
+const bcrypt = require('bcrypt');
 
 dotenv.config();
 
+const app = express();
+
+let thinkdropDB;
+
+app.use(cors({
+    origin: 'http://localhost:3001',
+    credentials: true
+}));
+
+app.use(express.json());
+
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '127.0.0.1';
 
-const server = http.createServer((req, res) => {
-
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-    const { method, url } = req;
-
-    if (method === 'POST') {
-        let body = '';
-        req.on('data', chunk => body += chunk);
-        req.on('end', () => {
-            const bodyData = JSON.parse(body);
-            if (url === '/addnewmail') {
-                addNewMail(bodyData, res);
-            }
-        });
-
-    } else if (method === 'GET' && url === '/') {
-        const filePath = path.join(__dirname, 'views', 'index.html');
-
-        fs.readFile(filePath, (err, data) => {
-            if (err) {
-                console.log(err);
-                res.writeHead(500);
-                res.end('Error While Loading Page');
-            } else {
-                res.writeHead(200, { 'content-type': 'text/html' });
-                res.end(data);
-            }
-        });
-    }
+app.listen(PORT, HOST, () => {
+    console.log('Server listening on', HOST, PORT);
+    thinkdropDB = connectToDB();
 });
 
-server.listen(PORT, () => {
-    console.log('Server is running on the port no.', PORT);
+app.get('/', (req, res) => {
+    console.log("Someone knows your server address");
+    res.send("Server is running");
+});
+
+app.post('/users/signup', async (req, res) => {
+    try {
+        const { email, name, preferredTime, password } = req.body;
+        const users = thinkdropDB.collection('users');
+
+        const isEmailExists = await users.findOne({ email: email });
+
+        if (isEmailExists) {
+            res.status(409).json({ success: false, message: "Email already exists and another mail" });
+            return;
+        }
+        const encryptedPass = await bcrypt.hash(password, Number(process.env.SALT_ROUNDS));
+
+        const newUserCreated = await users.insertOne({ name, email, preferredTime, password: encryptedPass });
+
+        res.json({ success: true, message: 'User created successfully' });
+    } catch (err) {
+        console.log(err);
+        return res.status(500).send({ success: false, message: "Internal server error" });
+    }
+
+});
+
+app.post('/users/login', async (req, res) => {
+    try {
+        const requestBody = req.body;
+        const users = thinkdropDB.collection('users');
+
+        const userFind = users.findOne({ email });
+
+        if (!userFind) {
+            return res.status(404).json({ success: false, message: "Email not found" });
+        }
+
+        const isPasswordCorrect = await bcrypt.compare(password, userFind.password);
+
+        if (!isPasswordCorrect) {
+            return res.status(401).json({ success: false, message: "Incorrect password" });
+        }
+
+        return res.status(200).json({ success: true, message: "Login successfull", user: userFind });
+
+    } catch (err) {
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+
 });

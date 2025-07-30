@@ -1,9 +1,12 @@
-const { createClient } = require('@supabase/supabase-js');
-let supabase;
+const { MongoClient } = require('mongodb');
 
 function connectToDB() {
-    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-    return supabase;
+    const client = new MongoClient(process.env.MONGODB_CONNECTION_URI);
+    const database = client.db('thinkdrop');
+    client.on('connectionCreated', () => {
+        console.log("Connection established with mongodb server");
+    });
+    return database;
 }
 
 module.exports = connectToDB;
