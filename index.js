@@ -20,8 +20,8 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '127.0.0.1';
 
-app.listen(PORT, HOST, () => {
-    console.log('Server listening on', HOST, PORT);
+app.listen(PORT, () => {
+    console.log('Server listening on', PORT);
     thinkdropDB = connectToDB();
 });
 
