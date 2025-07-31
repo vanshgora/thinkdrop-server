@@ -45,7 +45,11 @@ app.post('/users/signup', async (req, res) => {
 
         const newUserCreated = await users.insertOne({ name, email, preferredTime, password: encryptedPass });
 
-        res.json({ success: true, message: 'User created successfully' });
+        if (!newUserCreated) {
+            return res.status(500).send({ success: false, message: "Internal server error" });
+        }
+
+        return res.status(200).json({ success: true, message: 'User created successfully', user: newUserCreated });
     } catch (err) {
         console.log(err);
         return res.status(500).send({ success: false, message: "Internal server error" });
@@ -55,10 +59,10 @@ app.post('/users/signup', async (req, res) => {
 
 app.post('/users/login', async (req, res) => {
     try {
-        const requestBody = req.body;
+        const { email, password } = req.body;
         const users = thinkdropDB.collection('users');
 
-        const userFind = users.findOne({ email });
+        const userFind = await users.findOne({ email });
 
         if (!userFind) {
             return res.status(404).json({ success: false, message: "Email not found" });
@@ -73,6 +77,7 @@ app.post('/users/login', async (req, res) => {
         return res.status(200).json({ success: true, message: "Login successfull", user: userFind });
 
     } catch (err) {
+        console.log("Error while login", err);
         return res.status(500).json({ success: false, message: "Internal server error" });
     }
 
