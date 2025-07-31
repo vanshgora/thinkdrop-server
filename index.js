@@ -11,7 +11,7 @@ const app = express();
 let thinkdropDB;
 
 app.use(cors({
-    origin: '*',
+    origin: 'https://thinkdrop-client.vercel.app',
     credentials: true
 }));
 
