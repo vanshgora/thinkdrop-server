@@ -11,7 +11,7 @@ const app = express();
 let thinkdropDB;
 
 app.use(cors({
-    origin: 'http://localhost:3001',
+    origin: '*',
     credentials: true
 }));
 
