@@ -11,7 +11,7 @@ const app = express();
 let thinkdropDB;
 
 app.use(cors({
-    origin: 'https://thinkdrop-client.vercel.app',
+    origin: '*',
     credentials: true
 }));
 
@@ -22,7 +22,9 @@ const HOST = process.env.HOST || '127.0.0.1';
 
 app.listen(PORT, () => {
     console.log('Server listening on', PORT);
-    thinkdropDB = connectToDB();
+    connectToDB().then((val) => {
+        thinkdropDB = val;
+    });
 });
 
 app.get('/', (req, res) => {
