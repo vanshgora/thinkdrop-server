@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const connectToDB = require('./dbconfig');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const { generateJWTToken } = require('./script');
 
 dotenv.config();
 
@@ -11,7 +13,7 @@ const app = express();
 let thinkdropDB;
 
 app.use(cors({
-    origin: '*',
+    origin: process.env.WHITELIST_CLIENT,
     credentials: true
 }));
 
@@ -43,9 +45,18 @@ app.post('/users/signup', async (req, res) => {
             res.status(409).json({ success: false, message: "Email already exists and another mail" });
             return;
         }
+
         const encryptedPass = await bcrypt.hash(password, Number(process.env.SALT_ROUNDS));
 
-        const newUserCreated = await users.insertOne({ name, email, preferredTime, password: encryptedPass });
+        const newUserCreated = await users.insertOne({ name, email, preferredTime, password: encryptedPass, isServicePaused: false, createdAt: new Date() });
+
+        const token = `Bearer ${await generateJWTToken(newUserCreated)}`;
+
+        res.cookie('token', token, {
+            httpOnly: true,
+            maxAge: 1000 * 60 * 60 * 24 * 30 * 2,
+            secure: false
+        });
 
         if (!newUserCreated) {
             return res.status(500).send({ success: false, message: "Internal server error" });
@@ -84,3 +95,51 @@ app.post('/users/login', async (req, res) => {
     }
 
 });
+
+app.patch('/users/reschedule', async (req, res) => {
+    try {
+        const { email, preferredTime } = req.body;
+
+        const users = thinkdropDB.collection('users');
+
+        const currentUser = await users.findOne({ email });
+
+        const updatedUser = await users.findOneAndUpdate(
+            { _id: currentUser._id },
+            { $set: { preferredTime: preferredTime } },
+            { returnDocument: 'after' }
+        );
+
+        if (!updatedUser) {
+            return res.status(500).json({ success: false, message: "Internal server error" });
+        }
+
+        return res.status(200).json({ success: true, message: "Time rescheduled successfully", user: updatedUser });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+});
+
+app.patch('/users/update-email-delivery', async (req, res) => {
+    try {
+        const { email, isPaused } = req.body;
+
+        const users = thinkdropDB.collection('users');
+
+        const currentUser = await users.findOne({ email });
+
+        const updatedUser = await users.findOneAndUpdate(
+            { _id: currentUser._id },
+            { $set: { isPaused: isPaused } },
+            { returnDocument: 'after' }
+        );
+
+        if (!updatedUser) {
+            return res.status(500).json({ success: false, message: "Internal server error" });
+        }
+
+        return res.status(200).json({ success: true, message: "Successfull", user: updatedUser });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+})
