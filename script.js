@@ -7,6 +7,15 @@ const generateJWTToken = async (newUserCreated) => {
             else resolve(token);
         });
     });
-}
+};
 
-module.exports = { generateJWTToken }
+const verifyToken = async (token) => {
+    return new Promise((resolve, reject) => {
+        jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+            if (err) reject(err);
+            else resolve(decoded);
+        })
+    })
+};
+
+module.exports = { generateJWTToken, verifyToken }
