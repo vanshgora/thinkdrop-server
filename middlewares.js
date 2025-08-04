@@ -2,6 +2,7 @@ const { verifyToken } = require("./script");
 
 const authenticate = async (req, res, next) => {
     try {
+        console.log(req.cookies);
         if (req.cookies && req.cookies.token) {
             const token = req.cookies.token.substring(7);
             const decoded = await verifyToken(token);

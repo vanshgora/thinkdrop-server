@@ -5,6 +5,7 @@ const { connectToDB } = require('./dbconfig');
 const { signup, login, reSchedule, updateEmailDelivery } = require('./controllers');
 const { authenticate } = require('./middlewares');
 const cookieParser = require('cookie-parser');
+const { generateJWTToken } = require('./script');
 
 dotenv.config();
 
@@ -13,7 +14,8 @@ const app = express();
 let thinkdropDB;
 
 app.use(cors({
-    origin: 'https://thinkdrop-client.vercel.app',
+    // origin: 'https://thinkdrop-client.vercel.app',
+    origin: 'http://localhost:3001',
     credentials: true
 }));
 

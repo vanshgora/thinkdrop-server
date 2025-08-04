@@ -1,6 +1,5 @@
 const { getDb } = require("./dbconfig");
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 const { generateJWTToken } = require('./script');
 
 exports.signup = async (req, res) => {
@@ -53,8 +52,11 @@ exports.login = async (req, res) => {
 
         res.cookie('token', token, {
             httpOnly: true,
-            maxAge: 24 * 60 * 60 * 1000 * 30 * 2
+            maxAge: 24 * 60 * 60 * 1000 * 30 * 2,
+            sameSite: 'None',
+            secure: true,
         });
+
 
         return res.status(200).json({ success: true, message: "Login successfull", user: userFind });
 
