@@ -54,9 +54,8 @@ exports.login = async (req, res) => {
             httpOnly: true,
             maxAge: 24 * 60 * 60 * 1000 * 30 * 2,
             sameSite: 'None',
-            secure: false,
+            secure: true,
         });
-
         return res.status(200).json({ success: true, message: "Login successfull", user: userFind });
 
     } catch (err) {
