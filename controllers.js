@@ -53,10 +53,9 @@ exports.login = async (req, res) => {
         res.cookie('token', token, {
             httpOnly: true,
             maxAge: 24 * 60 * 60 * 1000 * 30 * 2,
-            sameSite: 'None',
+            sameSite: 'Lax',
             secure: true,
         });
-
 
         return res.status(200).json({ success: true, message: "Login successfull", user: userFind });
 
