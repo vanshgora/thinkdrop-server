@@ -13,8 +13,8 @@ const app = express();
 let thinkdropDB;
 
 app.use(cors({
-    // origin: 'https://thinkdrop-client.vercel.app',
-    origin: 'http://localhost:3001',
+    origin: 'https://thinkdrop-client.vercel.app',
+    // origin: 'http://localhost:3001',
     credentials: true
 }));
 
