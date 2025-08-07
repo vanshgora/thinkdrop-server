@@ -53,8 +53,8 @@ exports.login = async (req, res) => {
         res.cookie('token', token, {
             httpOnly: true,
             maxAge: 24 * 60 * 60 * 1000 * 30 * 2,
-            sameSite: 'none',
-            secure: true
+            sameSite: 'Lax',
+            secure: false
         });
         return res.status(200).json({ success: true, message: "Login successfull", user: userFind });
 
@@ -115,17 +115,14 @@ exports.updateEmailDelivery = async (req, res) => {
     }
 };
 
-exports.logout = async () => {
+exports.logout = async (req, res) => {
     try {
-
-        console.log(11);
         res.clearCookie("token", {
             httpOnly: true,
-            secure: true,
-            sameSite: "none",
+            secure: false,
+            sameSite: "Lax",
         });
-
-        return res.status(204).end();
+        return res.status(204).send({ success: true });
 
     } catch (err) {
         console.log("Error while logout", err);

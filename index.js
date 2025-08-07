@@ -13,8 +13,8 @@ const app = express();
 let thinkdropDB;
 
 app.use(cors({
-    origin: 'https://thinkdrop-client.vercel.app',
-    // origin: 'http://localhost:3001',
+    // origin: 'https://thinkdrop-client.vercel.app',
+    origin: 'http://localhost:3001',
     credentials: true
 }));
 
@@ -41,4 +41,4 @@ app.post('/users/signup', signup);
 app.post('/users/login', login);
 app.patch('/users/reschedule', authenticate, reSchedule);
 app.patch('/users/update-email-delivery', authenticate, updateEmailDelivery);
-app.head('/users/logout', authenticate, logout);
+app.get('/users/logout', logout);
