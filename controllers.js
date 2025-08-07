@@ -53,8 +53,8 @@ exports.login = async (req, res) => {
         res.cookie('token', token, {
             httpOnly: true,
             maxAge: 24 * 60 * 60 * 1000 * 30 * 2,
-            sameSite: 'None',
-            secure: true,
+            sameSite: 'Lax',
+            secure: false
         });
         return res.status(200).json({ success: true, message: "Login successfull", user: userFind });
 
@@ -114,3 +114,20 @@ exports.updateEmailDelivery = async (req, res) => {
         return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
+
+exports.logout = async () => {
+    try {
+
+        console.log(11);
+        res.clearCookie("token", {
+            httpOnly: true,
+            secure: false,
+            sameSite: "Lax",
+        });
+
+        return res.status(204).end();
+
+    } catch (err) {
+        console.log("Error while logout", err);
+    }
+}

@@ -2,10 +2,9 @@ const dotenv = require('dotenv');
 const express = require('express');
 const cors = require('cors');
 const { connectToDB } = require('./dbconfig');
-const { signup, login, reSchedule, updateEmailDelivery } = require('./controllers');
+const { signup, login, reSchedule, updateEmailDelivery, logout } = require('./controllers');
 const { authenticate } = require('./middlewares');
 const cookieParser = require('cookie-parser');
-const { generateJWTToken } = require('./script');
 
 dotenv.config();
 
@@ -14,8 +13,8 @@ const app = express();
 let thinkdropDB;
 
 app.use(cors({
-    origin: 'https://thinkdrop-client.vercel.app',
-    // origin: 'http://localhost:3001',
+    // origin: 'https://thinkdrop-client.vercel.app',
+    origin: 'http://localhost:3001',
     credentials: true
 }));
 
@@ -42,3 +41,4 @@ app.post('/users/signup', signup);
 app.post('/users/login', login);
 app.patch('/users/reschedule', authenticate, reSchedule);
 app.patch('/users/update-email-delivery', authenticate, updateEmailDelivery);
+app.head('/users/logout', authenticate, logout);
