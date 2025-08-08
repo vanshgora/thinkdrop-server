@@ -39,14 +39,16 @@ function getRequestBody(req) {
 }
 
 const parseCookie = (req) => {
-    const cookies = req.headers.cookie.split(';');
-    const parsedCookies = {};
-    cookies.map(cookie => {
-        const elem = cookie.trim().split('=');
-        parsedCookies[elem[0]] = elem[1];
-    });
+    if (req.headers.cookie) {
+        const cookies = req.headers.cookie.split(';');
+        const parsedCookies = {};
+        cookies.map(cookie => {
+            const elem = cookie.trim().split('=');
+            parsedCookies[elem[0]] = elem[1];
+        });
 
-    req.cookies = parsedCookies;
+        req.cookies = parsedCookies;
+    }
 }
 
 const configCors = (origin, req, res) => {
@@ -65,7 +67,7 @@ const configCors = (origin, req, res) => {
 }
 
 const deleteCookie = (cookie, res) => {
-    
+
 }
 
 module.exports = { generateJWTToken, verifyToken, getRequestBody, configCors, parseCookie }
