@@ -1,19 +1,23 @@
 const { verifyToken } = require("./script");
 
-const authenticate = async (req, res, next) => {
+const authenticate = async (req, res) => {
     try {
-        
         if (req.cookies && req.cookies.token) {
             const token = req.cookies.token.substring(7);
             const decoded = await verifyToken(token);
-            if(decoded.acknowledged) {
-                return res.status(401).json({ success: false, unAutherized: true, message: "Unautherized access" });
+            if (decoded.acknowledged) {
+                res.writeHead(401, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, unAutherized: true, message: "Unautherized access" }));
+                return false;
             }
-            next();
+
+            return true;
         }
     } catch (err) {
         console.log("Error while authentication", err);
-        return res.status(401).json({ success: false, message: "Internal Server Error" });
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, message: "Internal Server Error" }));
+        return false;
     }
 }
 

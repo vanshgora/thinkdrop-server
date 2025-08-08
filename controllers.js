@@ -5,6 +5,7 @@ const { generateJWTToken } = require('./script');
 exports.signup = async (req, res) => {
     try {
         const { email, name, preferredTime, password } = req.body;
+
         const thinkdropDB = getDb();
         const users = thinkdropDB.collection('users');
 
@@ -19,19 +20,23 @@ exports.signup = async (req, res) => {
         const newUserCreated = await users.insertOne({ name, email, preferredTime, password: encryptedPass, isServicePaused: false });
 
         if (!newUserCreated) {
-            return res.status(500).send({ success: false, message: "Internal server error" });
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ success: false, message: "Internal server error" }));
         }
 
-        return res.status(200).json({ success: true, message: 'User created successfully', user: newUserCreated });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: true, message: 'User created successfully', user: newUserCreated }));
     } catch (err) {
         console.log(err);
-        return res.status(500).send({ success: false, message: "Internal server error" });
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: false, message: "Internal server error" }));
     }
 
 };
 
 exports.login = async (req, res) => {
     try {
+
         const { email, password } = req.body;
         const thinkdropDB = getDb();
         const users = thinkdropDB.collection('users');
@@ -39,28 +44,27 @@ exports.login = async (req, res) => {
         const userFind = await users.findOne({ email });
 
         if (!userFind) {
-            return res.status(404).json({ success: false, message: "Email not found" });
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ success: false, message: "Email not found" }));
         }
 
         const isPasswordCorrect = await bcrypt.compare(password, userFind.password);
 
         if (!isPasswordCorrect) {
-            return res.status(401).json({ success: false, message: "Incorrect password" });
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ success: false, message: "Incorrect password" }));
         }
 
         const token = await generateJWTToken(userFind);
 
-        res.cookie('token', token, {
-            httpOnly: true,
-            maxAge: 24 * 60 * 60 * 1000 * 30 * 2,
-            sameSite: 'none',
-            secure: true
-        });
-        return res.status(200).json({ success: true, message: "Login successfull", user: userFind });
+        res.setHeader('Set-Cookie', `token=bearer ${token}; HttpOnly; Path=/; SameSite=None; Secure; Max-Age=${2 * 30 * 24 * 60 * 60 * 1000}`)
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: true, message: "Login successfull", user: userFind }));
 
     } catch (err) {
         console.log("Error while login", err);
-        return res.status(500).json({ success: false, message: "Internal server error" });
+        res.writeHead(500, { 'Content-Type': "application/json" });
+        return res.end(JSON.stringify({ success: false, message: "Internal server error" }));
     }
 };
 
@@ -80,12 +84,15 @@ exports.reSchedule = async (req, res) => {
         );
 
         if (!updatedUser) {
-            return res.status(500).json({ success: false, message: "Internal server error" });
+            res.writeHead(500, { 'Content-Type': "application/json" });
+            return res.end(JSON.stringify({ success: false, message: "Internal server error" }));
         }
 
-        return res.status(200).json({ success: true, message: "Time rescheduled successfully", user: updatedUser });
+        res.writeHead(200, { 'Content-Type': "application/json" });
+        return res.end(JSON.stringify({ success: true, message: "Time rescheduled successfully", user: updatedUser }));
     } catch (err) {
-        return res.status(500).json({ success: false, message: "Internal server error" });
+        res.writeHead(500, { 'Content-Type': "application/json" });
+        return res.end(JSON.stringify({ success: false, message: "Internal server error" }));
     }
 };
 
@@ -106,25 +113,25 @@ exports.updateEmailDelivery = async (req, res) => {
         );
 
         if (!updatedUser) {
-            return res.status(500).json({ success: false, message: "Internal server error" });
+            res.writeHead(500, { 'Content-Type': "application/json" });
+            return res.end(JSON.stringify({ success: false, message: "Internal server error" }));
         }
-
-        return res.status(200).json({ success: true, message: "Successfull", user: updatedUser });
+        res.writeHead(200, { 'Content-Type': "application/json" });
+        return res.end(JSON.stringify({ success: true, message: "Successfull", user: updatedUser }));
     } catch (err) {
-        return res.status(500).json({ success: false, message: "Internal server error" });
+        res.writeHead(500, { 'Content-Type': "application/json" });
+        return res.end(JSON.stringify({ success: false, message: "Internal server error" }));
     }
 };
 
 exports.logout = async (req, res) => {
     try {
-        res.clearCookie("token", {
-            httpOnly: true,
-            secure: true,
-            sameSite: "none",
-        });
-        return res.status(204).send({ success: true });
-
+        res.setHeader('Set-Cookie', `token=; HttpOnly; Path=/; SameSite=None; Secure; Max-Age=0`)
+        res.writeHead(204, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: true, message: "Logout Successfull" }));
     } catch (err) {
-        console.log("Error while logout", err);
+        console.log("Error while loging-out", err);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: false, message: "Logout Unsuccessfull" }));
     }
 }

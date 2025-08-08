@@ -1,44 +1,77 @@
 const dotenv = require('dotenv');
-const express = require('express');
-const cors = require('cors');
+const http = require('node:http');
 const { connectToDB } = require('./dbconfig');
 const { signup, login, reSchedule, updateEmailDelivery, logout } = require('./controllers');
+const { getRequestBody, parseCookie } = require('./script');
 const { authenticate } = require('./middlewares');
-const cookieParser = require('cookie-parser');
 
 dotenv.config();
-
-const app = express();
-
-let thinkdropDB;
-
-app.use(cors({
-    origin: 'https://thinkdrop-client.vercel.app',
-    // origin: 'http://localhost:3001',
-    credentials: true
-}));
-
-app.use(cookieParser());
-
-app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '127.0.0.1';
 
-app.listen(PORT, () => {
-    console.log('Server listening on', PORT);
-    connectToDB().then((val) => {
-        thinkdropDB = val;
-    });
+const server = http.createServer({ connectionsCheckingInterval: 20000 });
+
+server.on('request', async (req, res) => {
+    const methord = req.method;
+    const url = req.url;
+
+    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3001');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, HEAD, OPTIONS, DELETE');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    if (methord === 'OPTIONS') {
+        res.writeHead(204);
+        return res.end();
+    }
+
+    await getRequestBody(req);
+
+    parseCookie(req);
+
+    switch (methord) {
+        case 'GET':
+            break;
+        case 'POST':
+            switch (url) {
+                case '/users/signup':
+                    signup(req, res);
+                    break;
+                case '/users/login':
+                    login(req, res);
+                    break;
+                case '/users/logout':
+                    logout(req, res);
+                    break;
+            }
+            break;
+        case 'PATCH':
+            switch (url) {
+                case '/users/reschedule':
+                    {
+                        const isAuthenticated = await authenticate(req, res);
+                        if (!isAuthenticated) return;
+                        reSchedule(req, res);
+                    }
+                    break;
+                case '/users/update-email-delivery':
+                    {
+                        const isAuthenticated = await authenticate(req, res);
+                        if (!isAuthenticated) return;
+                        updateEmailDelivery(req, res);
+                    }
+                    break;
+            }
+            break;
+        case 'DELETE':
+            switch (url) {
+            }
+            break;
+    }
 });
 
-app.get('/', (req, res) => {
-    console.log("Someone knows your server address");
-    res.send("Server is running");
+server.listen(PORT, () => {
+    console.log('Server is listening on port no.', PORT);
+    connectToDB();
 });
-
-app.post('/users/signup', signup);
-app.post('/users/login', login);
-app.patch('/users/reschedule', authenticate, reSchedule);
-app.patch('/users/update-email-delivery', authenticate, updateEmailDelivery);
-app.get('/users/logout', logout);
