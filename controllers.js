@@ -17,7 +17,7 @@ exports.signup = async (req, res) => {
         }
         const encryptedPass = await bcrypt.hash(password, Number(process.env.SALT_ROUNDS));
 
-        const newUserCreated = await users.insertOne({ name, email, preferredTime, password: encryptedPass, isServicePaused: false });
+        const newUserCreated = await users.insertOne({ name, email, preferredTime, password: encryptedPass, isPaused: false, createdAt: new Date() });
 
         if (!newUserCreated) {
             res.writeHead(500, { 'Content-Type': 'application/json' });

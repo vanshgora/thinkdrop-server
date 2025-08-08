@@ -42,7 +42,11 @@ server.on('request', async (req, res) => {
                     login(req, res);
                     break;
                 case '/users/logout':
-                    logout(req, res);
+                    {
+                        const isAuthenticated = await authenticate(req, res);
+                        if (!isAuthenticated) return;
+                        logout(req, res);
+                    }
                     break;
             }
             break;
