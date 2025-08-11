@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { spawn } = require('node:child_process');
 
 const generateJWTToken = async (payload) => {
     return new Promise((resolve, reject) => {
@@ -66,8 +67,27 @@ const configCors = (origin, req, res) => {
     return isPreFlight;
 }
 
-const deleteCookie = (cookie, res) => {
+const generateTunnelingURL = async () => {
+    const tunnel = spawn("cloudflared", ["tunnel", "--url", "http://localhost:3000"]);
 
+    tunnel.stdout.on("data", (data) => {
+        const text = data.toString();
+        console.log("Tunnel Output:", text);
+
+        const match = text.match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/);
+        if (match) {
+            const tunnelUrl = match[0];
+            console.log("Tunnel URL:", tunnelUrl);
+        }
+    });
+
+    tunnel.stderr.on("data", (data) => {
+        console.error(`Error: ${data}`);
+    });
+
+    tunnel.on("close", (code) => {
+        console.log(`Tunnel process exited with code ${code}`);
+    });
 }
 
-module.exports = { generateJWTToken, verifyToken, getRequestBody, configCors, parseCookie }
+module.exports = { generateJWTToken, verifyToken, getRequestBody, configCors, parseCookie, generateTunnelingURL }
