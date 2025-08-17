@@ -57,7 +57,7 @@ exports.login = async (req, res) => {
 
         const token = await generateJWTToken(userFind);
 
-        res.setHeader('Set-Cookie', `token=bearer ${token}; HttpOnly; Path=/; SameSite=None; Secure; Max-Age=${2 * 30 * 24 * 60 * 60 * 1000}`)
+        res.setHeader('Set-Cookie', `token=bearer ${token}; sesssionId=ab123; HttpOnly; Path=/; SameSite=None; Secure; Max-Age=${2 * 30 * 24 * 60 * 60 * 1000}; Partitioned`)
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({ success: true, message: "Login successfull", user: userFind }));
 
@@ -123,6 +123,33 @@ exports.updateEmailDelivery = async (req, res) => {
         return res.end(JSON.stringify({ success: false, message: "Internal server error" }));
     }
 };
+
+exports.getTodaysTask = async (req, res) => {
+    try {
+        const thinkdropDB = getDb();
+        const tasks = thinkdropDB.collection('tasks');
+
+        const todaysTask = await tasks.findOne({}, {
+            sort: {
+                createdAt: -1
+            }
+        });
+
+        if (!todaysTask) {
+            console.log("Task collection is empty");
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ success: false, message: "No task found" }));
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: false, message: "Task found", task: todaysTask.topic }));
+
+    } catch (err) {
+        console.log("Error while getting today's task", err);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: false, message: "Logout Unsuccessfull" }));
+    }
+}
 
 exports.logout = async (req, res) => {
     try {

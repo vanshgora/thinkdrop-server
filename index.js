@@ -1,7 +1,7 @@
 const dotenv = require('dotenv');
 const http = require('node:http');
 const { connectToDB } = require('./dbconfig');
-const { signup, login, reSchedule, updateEmailDelivery, logout } = require('./controllers');
+const { signup, login, reSchedule, updateEmailDelivery, logout, getTodaysTask } = require('./controllers');
 const { getRequestBody, parseCookie, generateTunnelingURL } = require('./script');
 const { authenticate } = require('./middlewares');
 
@@ -17,8 +17,8 @@ async function startServer() {
         const methord = req.method;
         const url = req.url;
 
-        res.setHeader('Access-Control-Allow-Origin', 'https://thinkdrop-client.vercel.app');
-        // res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3001');
+        // res.setHeader('Access-Control-Allow-Origin', 'https://thinkdrop-client.vercel.app');
+        res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3001');
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, HEAD, OPTIONS, DELETE');
         res.setHeader('Access-Control-Allow-Credentials', 'true');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -34,6 +34,15 @@ async function startServer() {
 
         switch (methord) {
             case 'GET':
+                switch (url) {
+                    case '/users/gettodaystask':
+                        {
+                            const isAuthenticated = await authenticate(req, res);
+                            if (!isAuthenticated) return;
+                            getTodaysTask(req, res);
+                        }
+                        break;
+                }
                 break;
             case 'POST':
                 switch (url) {
