@@ -1,4 +1,5 @@
 const { getDb } = require("./dbconfig");
+const { ObjectId } = require("mongodb");
 const bcrypt = require('bcrypt');
 const { generateJWTToken } = require('./script');
 
@@ -57,7 +58,7 @@ exports.login = async (req, res) => {
 
         const token = await generateJWTToken(userFind);
 
-        res.setHeader('Set-Cookie', `token=bearer ${token}; sesssionId=ab123; HttpOnly; Path=/; SameSite=None; Secure; Max-Age=${2 * 30 * 24 * 60 * 60 * 1000}; Partitioned`)
+        res.setHeader('Set-Cookie', `token=bearer ${token}; HttpOnly; Path=/; SameSite=None; Secure; Max-Age=${2 * 30 * 24 * 60 * 60 * 1000}; Partitioned`)
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({ success: true, message: "Login successfull", user: userFind }));
 
@@ -142,7 +143,7 @@ exports.getTodaysTask = async (req, res) => {
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ success: false, message: "Task found", task: todaysTask.topic }));
+        return res.end(JSON.stringify({ success: true, message: "Task found", task: todaysTask.topic }));
 
     } catch (err) {
         console.log("Error while getting today's task", err);
@@ -153,7 +154,7 @@ exports.getTodaysTask = async (req, res) => {
 
 exports.logout = async (req, res) => {
     try {
-        res.setHeader('Set-Cookie', `token=; HttpOnly; Path=/; SameSite=None; Secure; Max-Age=0`)
+        res.setHeader('Set-Cookie', `token=; HttpOnly; Path=/; SameSite=None; Secure; Max-Age=0; Partitioned`);
         res.writeHead(204, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({ success: true, message: "Logout Successfull" }));
     } catch (err) {
@@ -162,3 +163,30 @@ exports.logout = async (req, res) => {
         return res.end(JSON.stringify({ success: false, message: "Logout Unsuccessfull" }));
     }
 }
+
+exports.deleteAccount = async (req, res) => {
+    try {
+
+        const url = req.url;
+        const urlArr = url.split('/');
+        const id = new ObjectId(urlArr[urlArr.length - 1]);
+
+        const thinkdropDB = getDb();
+        const users = thinkdropDB.collection('users');
+
+        const deletedUser = await users.findOneAndDelete({ _id: id });
+
+        if(!deletedUser) {
+            throw("Error while deleting user from database")
+        }
+
+        res.setHeader('Set-Cookie', `token=; HttpOnly; Path=/; SameSite=None; Secure; Max-Age=0; Partitioned`);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        console.log(deletedUser, 'deleted the account')
+        return res.end(JSON.stringify({ success: true, message: "Account Deleted Successfully" }));
+    } catch (err) {
+        console.log("Error while deleting account", err);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: false, message: "Internal Server Error" }));
+    }
+};

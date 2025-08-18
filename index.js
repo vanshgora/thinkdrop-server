@@ -1,7 +1,7 @@
 const dotenv = require('dotenv');
 const http = require('node:http');
 const { connectToDB } = require('./dbconfig');
-const { signup, login, reSchedule, updateEmailDelivery, logout, getTodaysTask } = require('./controllers');
+const { signup, login, reSchedule, updateEmailDelivery, logout, getTodaysTask, deleteAccount } = require('./controllers');
 const { getRequestBody, parseCookie, generateTunnelingURL } = require('./script');
 const { authenticate } = require('./middlewares');
 
@@ -28,7 +28,7 @@ async function startServer() {
             return res.end();
         }
 
-        if (methord !== 'GET') await getRequestBody(req);
+        if (methord !== 'GET' && methord !== 'DELETE') await getRequestBody(req);
 
         parseCookie(req);
 
@@ -80,7 +80,12 @@ async function startServer() {
                 }
                 break;
             case 'DELETE':
-                switch (url) {
+                if (url.includes('/users/deleteaccount')) {
+                    {
+                        const isAuthenticated = await authenticate(req, res);
+                        if (!isAuthenticated) return;
+                        deleteAccount(req, res);
+                    }
                 }
                 break;
         }

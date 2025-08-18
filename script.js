@@ -90,4 +90,8 @@ const generateTunnelingURL = async () => {
     });
 }
 
+const getRquestParams = async (url) => {
+
+}
+
 module.exports = { generateJWTToken, verifyToken, getRequestBody, configCors, parseCookie, generateTunnelingURL }
