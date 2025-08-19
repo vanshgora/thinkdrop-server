@@ -1,7 +1,7 @@
 const dotenv = require('dotenv');
 const http = require('node:http');
 const { connectToDB } = require('./dbconfig');
-const { signup, login, reSchedule, updateEmailDelivery, logout, getTodaysTask, deleteAccount } = require('./controllers');
+const { signup, login, reSchedule, updateEmailDelivery, logout, getTodaysTask, deleteAccount, forgotPassword, verifyOTP, setNewPassword } = require('./controllers');
 const { getRequestBody, parseCookie, generateTunnelingURL } = require('./script');
 const { authenticate } = require('./middlewares');
 
@@ -17,8 +17,8 @@ async function startServer() {
         const methord = req.method;
         const url = req.url;
 
-        res.setHeader('Access-Control-Allow-Origin', 'https://thinkdrop-client.vercel.app');
-        // res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3001');
+        // res.setHeader('Access-Control-Allow-Origin', 'https://thinkdrop-client.vercel.app');
+        res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3001');
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, HEAD, OPTIONS, DELETE');
         res.setHeader('Access-Control-Allow-Credentials', 'true');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -52,6 +52,9 @@ async function startServer() {
                     case '/users/login':
                         login(req, res);
                         break;
+                    case '/users/forgotpassword':
+                        forgotPassword(req, res);
+                        break;
                     case '/users/logout':
                         {
                             const isAuthenticated = await authenticate(req, res);
@@ -63,6 +66,12 @@ async function startServer() {
                 break;
             case 'PATCH':
                 switch (url) {
+                    case '/users/setnewpassword':
+                        const otpVrified = await verifyOTP(req, res);
+                        if(otpVrified === 1) {
+                            setNewPassword(req, res);
+                        }
+                        break;
                     case '/users/reschedule':
                         {
                             const isAuthenticated = await authenticate(req, res);
