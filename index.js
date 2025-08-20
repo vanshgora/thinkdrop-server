@@ -68,7 +68,7 @@ async function startServer() {
                 switch (url) {
                     case '/users/setnewpassword':
                         const otpVrified = await verifyOTP(req, res);
-                        if(otpVrified === 1) {
+                        if (otpVrified === 1) {
                             setNewPassword(req, res);
                         }
                         break;
@@ -84,6 +84,13 @@ async function startServer() {
                             const isAuthenticated = await authenticate(req, res);
                             if (!isAuthenticated) return;
                             updateEmailDelivery(req, res);
+                        }
+                        break;
+                    case '/users/resetpassword':
+                        {
+                            const isAuthenticated = await authenticate(req, res);
+                            if (!isAuthenticated) return;
+                            setNewPassword(req, res);
                         }
                         break;
                 }
