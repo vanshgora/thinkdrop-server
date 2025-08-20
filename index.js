@@ -53,6 +53,14 @@ async function startServer() {
                                 res.end(JSON.stringify({ success: true, message: "Logged in user" }));
                             }
                         }
+                        break;
+                    case '/users/logout':
+                        {
+                            const isAuthenticated = await authenticate(req, res);
+                            if (!isAuthenticated) return;
+                            logout(req, res);
+                        }
+                        break;
                 }
                 break;
             case 'POST':
@@ -65,13 +73,6 @@ async function startServer() {
                         break;
                     case '/users/forgotpassword':
                         forgotPassword(req, res);
-                        break;
-                    case '/users/logout':
-                        {
-                            const isAuthenticated = await authenticate(req, res);
-                            if (!isAuthenticated) return;
-                            logout(req, res);
-                        }
                         break;
                 }
                 break;

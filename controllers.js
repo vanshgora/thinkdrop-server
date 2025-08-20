@@ -88,7 +88,10 @@ exports.reSchedule = async (req, res) => {
             res.writeHead(500, { 'Content-Type': "application/json" });
             return res.end(JSON.stringify({ success: false, message: "Internal server error" }));
         }
+        
+        const token = await generateJWTToken(updatedUser);
 
+        res.setHeader('Set-Cookie', `token=bearer ${token}; HttpOnly; Path=/; SameSite=None; Secure; Max-Age=${2 * 30 * 24 * 60 * 60 * 1000}; Partitioned`);
         res.writeHead(200, { 'Content-Type': "application/json" });
         return res.end(JSON.stringify({ success: true, message: "Time rescheduled successfully", user: updatedUser }));
     } catch (err) {
@@ -117,6 +120,10 @@ exports.updateEmailDelivery = async (req, res) => {
             res.writeHead(500, { 'Content-Type': "application/json" });
             return res.end(JSON.stringify({ success: false, message: "Internal server error" }));
         }
+
+        const token = await generateJWTToken(updatedUser);
+
+        res.setHeader('Set-Cookie', `token=bearer ${token}; HttpOnly; Path=/; SameSite=None; Secure; Max-Age=${2 * 30 * 24 * 60 * 60 * 1000}; Partitioned`);
         res.writeHead(200, { 'Content-Type': "application/json" });
         return res.end(JSON.stringify({ success: true, message: "Successfull", user: updatedUser }));
     } catch (err) {
@@ -155,7 +162,7 @@ exports.getTodaysTask = async (req, res) => {
 exports.logout = async (req, res) => {
     try {
         res.setHeader('Set-Cookie', `token=; HttpOnly; Path=/; SameSite=None; Secure; Max-Age=0; Partitioned`);
-        res.writeHead(204, { 'Content-Type': 'application/json' });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({ success: true, message: "Logout Successfull" }));
     } catch (err) {
         console.log("Error while loging-out", err);
