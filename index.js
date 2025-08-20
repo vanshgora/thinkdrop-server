@@ -42,6 +42,17 @@ async function startServer() {
                             getTodaysTask(req, res);
                         }
                         break;
+                    case '/users/isloggedin':
+                        {
+                            const isAuthenticated = await authenticate(req, res);
+                            if (!isAuthenticated) {
+                                res.writeHead(401, { 'Content-Type': 'application/json' });
+                                res.end(JSON.stringify({ success: false, message: "User not logged in" }));
+                            } else {
+                                res.writeHead(200, { 'Content-Type': 'application/json' });
+                                res.end(JSON.stringify({ success: true, message: "Logged in user" }));
+                            }
+                        }
                 }
                 break;
             case 'POST':
