@@ -1,7 +1,7 @@
 const dotenv = require('dotenv');
 const http = require('node:http');
 const { connectToDB } = require('./dbconfig');
-const { signup, login, reSchedule, updateEmailDelivery, logout, getTodaysTask, deleteAccount, forgotPassword, verifyOTP, setNewPassword } = require('./controllers');
+const { signup, login, reSchedule, updateEmailDelivery, logout, getTodaysTask, deleteAccount, forgotPassword, verifyOTP, setNewPassword, getUserTasks, updateUserTasks } = require('./controllers');
 const { getRequestBody, parseCookie, generateTunnelingURL } = require('./script');
 const { authenticate } = require('./middlewares');
 
@@ -62,6 +62,11 @@ async function startServer() {
                         }
                         break;
                 }
+                if (url.includes('/users/getusertasks')) {
+                    const isAuthenticated = await authenticate(req, res);
+                    if (!isAuthenticated) return;
+                    getUserTasks(req, res);
+                }
                 break;
             case 'POST':
                 switch (url) {
@@ -103,6 +108,13 @@ async function startServer() {
                             const isAuthenticated = await authenticate(req, res);
                             if (!isAuthenticated) return;
                             setNewPassword(req, res);
+                        }
+                        break;
+                    case '/users/updateusertasks':
+                        {
+                            const isAuthenticated = await authenticate(req, res);
+                            if (!isAuthenticated) return;
+                            updateUserTasks(req, res);
                         }
                         break;
                 }

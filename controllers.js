@@ -88,7 +88,7 @@ exports.reSchedule = async (req, res) => {
             res.writeHead(500, { 'Content-Type': "application/json" });
             return res.end(JSON.stringify({ success: false, message: "Internal server error" }));
         }
-        
+
         const token = await generateJWTToken(updatedUser);
 
         res.setHeader('Set-Cookie', `token=bearer ${token}; HttpOnly; Path=/; SameSite=None; Secure; Max-Age=${2 * 30 * 24 * 60 * 60 * 1000}; Partitioned`);
@@ -158,6 +158,78 @@ exports.getTodaysTask = async (req, res) => {
         return res.end(JSON.stringify({ success: false, message: "Logout Unsuccessfull" }));
     }
 }
+
+exports.getUserTasks = async (req, res) => {
+    try {
+        const url = req.url;
+        const urlArr = url.split('/');
+        const id = new ObjectId(urlArr[urlArr.length - 1]);
+
+        const thinkdropDB = getDb();
+        const userTasksCollection = thinkdropDB.collection('usertasks');
+
+        const userTasks = await userTasksCollection.findOne({ userId: id });
+
+        if (!userTasks) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ success: false, message: "User Tasks Not Found" }));
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: true, userTasks: userTasks }));
+    } catch (err) {
+        Console.log("Error while getting user's task", err);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: false, message: "Internal Server Error" }));
+    }
+}
+
+exports.updateUserTasks = async (req, res) => {
+    try {
+        const { userId, taskTrackArr } = req.body;
+
+        const thinkdropDB = getDb();
+        const userTasksCollection = thinkdropDB.collection('usertasks');
+
+        const userTask = await userTasksCollection.findOne({ userId: new ObjectId(userId) });
+
+        if (!userTask) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ success: false, message: "User tasks not found" }));
+        }
+
+        const today = new Date();
+
+        const dateKey = `${today.getDate()}/${today.getMonth()}/${today.getFullYear()}`;
+
+        console.log(dateKey);
+
+        const tasks = userTask.tasks;
+
+        tasks[dateKey].taskTrack = taskTrackArr;
+        
+        const updatedUserTasks = await userTasksCollection.findOneAndUpdate(
+            { userId: new ObjectId(userId) },
+            {
+                $set: {
+                    tasks: tasks,
+                    updatedAt: new Date()
+                }
+            }
+        );
+
+        if (!updatedUserTasks) {
+            throw ("Error while updating user tasks collection in db");
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: true, message: "User tasks updated" }));
+    } catch (err) {
+        console.log("Error while updating user's task", err);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: false, message: "Internal Server Error" }));
+    }
+};
 
 exports.logout = async (req, res) => {
     try {
